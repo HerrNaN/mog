@@ -21,6 +21,7 @@ const (
 	dirLeft
 )
 
+// NewState creates a new program empty state
 func NewState() *State {
 	// Initialize screen
 	s, err := tcell.NewScreen()
@@ -63,6 +64,7 @@ func (s *State) showCursor() {
 	s.Screen.ShowCursor(s.cursorX, s.cursorY)
 }
 
+// Start sets up the program and starts the event loop
 func (s *State) Start() {
 	s.Screen.Clear()
 	s.Screen.ShowCursor(s.cursorX, s.cursorY)
@@ -116,6 +118,7 @@ func (s *State) setContent(r rune) {
 	s.Screen.SetContent(s.cursorX, s.cursorY, r, nil, tcell.StyleDefault)
 }
 
+// Quit exits the program
 func (s *State) Quit() {
 	s.Screen.Fini()
 	os.Exit(0)
