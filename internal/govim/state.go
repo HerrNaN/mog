@@ -12,13 +12,13 @@ type State struct {
 	cursorX, cursorY int
 }
 
-type Dir int
+type dir int
 
 const (
-	DirUp Dir = iota
-	DirDown
-	DirRight
-	DirLeft
+	dirUp dir = iota
+	dirDown
+	dirRight
+	dirLeft
 )
 
 func NewState() *State {
@@ -36,22 +36,22 @@ func NewState() *State {
 	}
 }
 
-func (s *State) moveCursor(d Dir) {
+func (s *State) moveCursor(d dir) {
 	w, h := s.Screen.Size()
 	switch d {
-	case DirUp:
+	case dirUp:
 		if s.cursorY > 0 {
 			s.cursorY--
 		}
-	case DirDown:
+	case dirDown:
 		if s.cursorY < h-1 {
 			s.cursorY++
 		}
-	case DirLeft:
+	case dirLeft:
 		if s.cursorX > 0 {
 			s.cursorX--
 		}
-	case DirRight:
+	case dirRight:
 		if s.cursorX < w-1 {
 			s.cursorX++
 		}
@@ -93,19 +93,19 @@ func (s *State) handleEventKey(ev tcell.EventKey) {
 	switch ev.Key() {
 	case tcell.KeyRune:
 		s.setContent(ev.Rune())
-		s.moveCursor(DirRight)
+		s.moveCursor(dirRight)
 	case tcell.KeyEscape:
 		s.Quit()
 	case tcell.KeyUp:
-		s.moveCursor(DirUp)
+		s.moveCursor(dirUp)
 	case tcell.KeyDown:
-		s.moveCursor(DirDown)
+		s.moveCursor(dirDown)
 	case tcell.KeyRight:
-		s.moveCursor(DirRight)
+		s.moveCursor(dirRight)
 	case tcell.KeyLeft:
-		s.moveCursor(DirLeft)
+		s.moveCursor(dirLeft)
 	case tcell.KeyBackspace2:
-		s.moveCursor(DirLeft)
+		s.moveCursor(dirLeft)
 		s.setContent(ev.Rune())
 	case tcell.KeyDelete:
 		s.setContent(ev.Rune())
