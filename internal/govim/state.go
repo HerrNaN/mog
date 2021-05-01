@@ -11,7 +11,13 @@ import (
 type State struct {
 	Screen           tcell.Screen
 	cursorX, cursorY int
-	buffer           string
+
+	// The buffer containing the contents currently being processed
+	buffer string
+
+	// The line number from the buffer that should be written to the
+	// first line on screen
+	scrollIdx int
 }
 
 type dir int
