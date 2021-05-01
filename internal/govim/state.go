@@ -91,6 +91,9 @@ func (s *State) run() {
 
 func (s *State) handleEventKey(ev tcell.EventKey) {
 	switch ev.Key() {
+	case tcell.KeyRune:
+		s.setContent(ev.Rune())
+		s.moveCursor(DirRight)
 	case tcell.KeyEscape:
 		s.Quit()
 	case tcell.KeyUp:
@@ -101,7 +104,16 @@ func (s *State) handleEventKey(ev tcell.EventKey) {
 		s.moveCursor(DirRight)
 	case tcell.KeyLeft:
 		s.moveCursor(DirLeft)
+	case tcell.KeyBackspace2:
+		s.moveCursor(DirLeft)
+		s.setContent(ev.Rune())
+	case tcell.KeyDelete:
+		s.setContent(ev.Rune())
 	}
+}
+
+func (s *State) setContent(r rune) {
+	s.Screen.SetContent(s.cursorX, s.cursorY, r, nil, tcell.StyleDefault)
 }
 
 func (s *State) Quit() {
