@@ -41,8 +41,10 @@ func NewState() *State {
 	}
 
 	return &State{
-		Screen: s,
-		buffer: "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz",
+		Screen:  s,
+		cursorY: 0,
+		cursorX: 0,
+		buffer:  "Hello\nMy\nName\nIs\n  HAHAH\n\n\n\n\nasdasdasd\nasd\nasd\nasd",
 	}
 }
 
@@ -52,10 +54,16 @@ func (s *State) moveCursor(d dir) {
 	case dirUp:
 		if s.cursorY > 0 {
 			s.cursorY--
+		} else if s.scrollIdx > 0 {
+			s.scrollIdx--
 		}
 	case dirDown:
-		if s.cursorY < h-1 {
-			s.cursorY++
+		if s.scrollIdx+s.cursorY < len(strings.Split(s.buffer, "\n")) {
+			if s.cursorY == h-1 {
+				s.scrollIdx++
+			} else {
+				s.cursorY++
+			}
 		}
 	case dirLeft:
 		if s.cursorX > 0 {
@@ -93,6 +101,7 @@ func (s *State) run() {
 		switch ev := ev.(type) {
 		case *tcell.EventResize:
 			s.Screen.Sync()
+			s.moveCursorIntoBounds()
 		case *tcell.EventKey:
 			s.handleEventKey(*ev)
 		default:
@@ -133,7 +142,8 @@ func (s *State) showBuffer() {
 	w, h := s.Screen.Size()
 	lineN := 0
 	var toShow []string
-	for _, l := range strings.Split(s.buffer, "\n") {
+	buf := strings.Split(s.buffer, "\n")
+	for _, l := range buf[s.scrollIdx:] {
 		if lineN >= h {
 			break
 		}
@@ -158,6 +168,11 @@ func (s *State) showBuffer() {
 	for i, l := range toShow {
 		s.writeLine(i, l)
 	}
+
+	// All lines after end of buffer are marked with a ~ in the left margin
+	for i := 0; i < h-len(toShow); i++ {
+		s.Screen.SetContent(0, len(toShow)+i+1, '~', nil, tcell.StyleDefault)
+	}
 	s.Screen.Show()
 }
 
@@ -171,4 +186,15 @@ func (s *State) writeLine(lineNum int, line string) {
 func (s *State) Quit() {
 	s.Screen.Fini()
 	os.Exit(0)
+}
+
+func (s *State) moveCursorIntoBounds() {
+	w, h := s.Screen.Size()
+	if s.cursorY > h-1 {
+		s.cursorY = h - 1
+	}
+	if s.cursorX > w-1 {
+		s.cursorX = w - 1
+	}
+	s.showCursor()
 }
