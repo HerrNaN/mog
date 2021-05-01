@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"elyria.io/govim/internal/govim"
+)
 
 func main() {
-	fmt.Println("Hello World")
+	govim.NewState().Start()
 }
