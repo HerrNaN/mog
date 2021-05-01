@@ -48,6 +48,19 @@ func NewState() *State {
 	}
 }
 
+// Start sets up the program and starts the event loop
+func (s *State) Start() {
+	s.Screen.Clear()
+	s.Screen.ShowCursor(s.cursorX, s.cursorY)
+	s.run()
+}
+
+// Quit exits the program
+func (s *State) Quit() {
+	s.Screen.Fini()
+	os.Exit(0)
+}
+
 func (s *State) moveCursor(d dir) {
 	w, h := s.Screen.Size()
 	switch d {
@@ -79,13 +92,6 @@ func (s *State) moveCursor(d dir) {
 
 func (s *State) showCursor() {
 	s.Screen.ShowCursor(s.cursorX, s.cursorY)
-}
-
-// Start sets up the program and starts the event loop
-func (s *State) Start() {
-	s.Screen.Clear()
-	s.Screen.ShowCursor(s.cursorX, s.cursorY)
-	s.run()
 }
 
 func (s *State) run() {
@@ -180,12 +186,6 @@ func (s *State) writeLine(lineNum int, line string) {
 	for x, r := range line {
 		s.Screen.SetContent(x, lineNum, r, nil, tcell.StyleDefault)
 	}
-}
-
-// Quit exits the program
-func (s *State) Quit() {
-	s.Screen.Fini()
-	os.Exit(0)
 }
 
 func (s *State) moveCursorIntoBounds() {
