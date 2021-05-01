@@ -3,6 +3,7 @@ package govim
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -10,6 +11,7 @@ import (
 type State struct {
 	Screen           tcell.Screen
 	cursorX, cursorY int
+	buffer           string
 }
 
 type dir int
@@ -34,6 +36,7 @@ func NewState() *State {
 
 	return &State{
 		Screen: s,
+		buffer: "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz",
 	}
 }
 
@@ -74,7 +77,8 @@ func (s *State) Start() {
 func (s *State) run() {
 	for {
 		// Update screen
-		s.Screen.Show()
+		//s.Screen.Show()
+		s.showBuffer()
 
 		// Poll event
 		ev := s.Screen.PollEvent()
@@ -116,6 +120,45 @@ func (s *State) handleEventKey(ev tcell.EventKey) {
 
 func (s *State) setContent(r rune) {
 	s.Screen.SetContent(s.cursorX, s.cursorY, r, nil, tcell.StyleDefault)
+}
+
+func (s *State) showBuffer() {
+	s.Screen.Clear()
+	w, h := s.Screen.Size()
+	lineN := 0
+	var toShow []string
+	for _, l := range strings.Split(s.buffer, "\n") {
+		if lineN >= h {
+			break
+		}
+		if len(l) < w {
+			toShow = append(toShow, l)
+			lineN++
+		} else {
+			chunk := l
+			for {
+				if len(chunk) < w {
+					toShow = append(toShow, chunk)
+					lineN++
+					break
+				}
+				toShow = append(toShow, chunk[:w])
+				chunk = chunk[w:]
+				lineN++
+			}
+		}
+	}
+
+	for i, l := range toShow {
+		s.writeLine(i, l)
+	}
+	s.Screen.Show()
+}
+
+func (s *State) writeLine(lineNum int, line string) {
+	for x, r := range line {
+		s.Screen.SetContent(x, lineNum, r, nil, tcell.StyleDefault)
+	}
 }
 
 // Quit exits the program
