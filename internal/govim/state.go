@@ -17,7 +17,7 @@ type State struct {
 
 	// The line number from the buffer that should be written to the
 	// first line on screen
-	scrollX, scrollY int
+	bufferOffset int
 }
 
 type dir int
@@ -67,16 +67,16 @@ func (s *State) moveCursor(d dir) {
 	case dirUp:
 		if s.cursorY > 0 {
 			s.cursorY--
-		} else if s.scrollY > 0 {
-			s.scrollY--
+		} else if s.bufferOffset > 0 {
+			s.bufferOffset--
 		}
 	case dirDown:
 		if s.cursorY == h-1 {
-			if s.scrollY+s.cursorY < len(s.buffer)-1 {
-				s.scrollY++
+			if s.bufferOffset+s.cursorY < len(s.buffer)-1 {
+				s.bufferOffset++
 			}
 		} else if s.cursorY < h-1 {
-			if s.scrollY+s.cursorY < len(s.buffer)-1 {
+			if s.bufferOffset+s.cursorY < len(s.buffer)-1 {
 				s.cursorY++
 			}
 		} else {
@@ -194,8 +194,8 @@ func (s *State) bufferPosToViewPos(bufX, bufY int, wrap bool) (int, int) {
 	x := bufX % w
 
 	offs := 0
-	for i := 0; i < bufY-s.scrollY; i++ {
-		offs += 1 + len(s.buffer[s.scrollY+i])/w
+	for i := 0; i < bufY-s.bufferOffset; i++ {
+		offs += 1 + len(s.buffer[s.bufferOffset+i])/w
 	}
 
 	y := bufX/w + offs
