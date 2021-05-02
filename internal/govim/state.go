@@ -13,11 +13,11 @@ type State struct {
 	cursorX, cursorY int
 
 	// The buffer containing the contents currently being processed
-	buffer string
+	buffer []string
 
 	// The line number from the buffer that should be written to the
 	// first line on screen
-	scrollIdx int
+	scrollX, scrollY int
 }
 
 type dir int
@@ -44,7 +44,7 @@ func NewState() *State {
 		Screen:  s,
 		cursorY: 0,
 		cursorX: 0,
-		buffer:  "Hello\nMy\nName\nIs\n  HAHAH\n\n\n\n\nasdasdasd\nasd\nasd\nasd",
+		buffer:  strings.Split("Hello\nMy\nName\nIs\n  HAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAH\n\n\n\n\nasdasdasd\nasd\nasd\nasd\n", "\n"),
 	}
 }
 
@@ -62,32 +62,42 @@ func (s *State) Quit() {
 }
 
 func (s *State) moveCursor(d dir) {
-	w, h := s.Screen.Size()
+	_, h := s.Screen.Size()
 	switch d {
 	case dirUp:
 		if s.cursorY > 0 {
 			s.cursorY--
-		} else if s.scrollIdx > 0 {
-			s.scrollIdx--
+		} else if s.scrollY > 0 {
+			s.scrollY--
 		}
 	case dirDown:
-		if s.scrollIdx+s.cursorY < len(strings.Split(s.buffer, "\n")) {
-			if s.cursorY == h-1 {
-				s.scrollIdx++
-			} else {
+		if s.cursorY == h-1 {
+			if s.scrollY+s.cursorY < len(s.buffer)-1 {
+				s.scrollY++
+			}
+		} else if s.cursorY < h-1 {
+			if s.scrollY+s.cursorY < len(s.buffer)-1 {
 				s.cursorY++
 			}
+		} else {
+			panic("cursor below screen")
 		}
 	case dirLeft:
 		if s.cursorX > 0 {
 			s.cursorX--
 		}
 	case dirRight:
-		if s.cursorX < w-1 {
+		if s.cursorX < len(s.buffer[s.cursorY]) {
 			s.cursorX++
 		}
 	}
-	s.Screen.ShowCursor(s.cursorX, s.cursorY)
+	if s.cursorX > len(s.buffer[s.cursorY]) {
+		x, y := s.bufferPosToViewPos(len(s.buffer[s.cursorY]), s.cursorY, true)
+		s.Screen.ShowCursor(x, y)
+		return
+	}
+	x, y := s.bufferPosToViewPos(s.cursorX, s.cursorY, true)
+	s.Screen.ShowCursor(x, y)
 }
 
 func (s *State) showCursor() {
@@ -145,45 +155,26 @@ func (s *State) setContent(r rune) {
 
 func (s *State) showBuffer() {
 	s.Screen.Clear()
-	w, h := s.Screen.Size()
-	lineN := 0
-	var toShow []string
-	buf := strings.Split(s.buffer, "\n")
-	for _, l := range buf[s.scrollIdx:] {
-		if lineN >= h {
-			break
+	for bufY := range s.buffer {
+		for bufX, r := range s.buffer[bufY] {
+			x, y := s.bufferPosToViewPos(bufX, bufY, true)
+			s.Screen.SetContent(x, y, r, nil, tcell.StyleDefault)
 		}
-		if len(l) < w {
-			toShow = append(toShow, l)
-			lineN++
-		} else {
-			chunk := l
-			for {
-				if len(chunk) < w {
-					toShow = append(toShow, chunk)
-					lineN++
-					break
-				}
-				toShow = append(toShow, chunk[:w])
-				chunk = chunk[w:]
-				lineN++
-			}
-		}
-	}
-
-	for i, l := range toShow {
-		s.writeLine(i, l)
-	}
-
-	// All lines after end of buffer are marked with a ~ in the left margin
-	for i := 0; i < h-len(toShow); i++ {
-		s.Screen.SetContent(0, len(toShow)+i+1, '~', nil, tcell.StyleDefault)
 	}
 	s.Screen.Show()
 }
 
+//func fitBufInto(buf []string, w int, h int, offs int) []string {
+//	//var newBuf []string
+//	//for
+//}
+
 func (s *State) writeLine(lineNum int, line string) {
+	w, _ := s.Screen.Size()
 	for x, r := range line {
+		if x > w {
+			return
+		}
 		s.Screen.SetContent(x, lineNum, r, nil, tcell.StyleDefault)
 	}
 }
@@ -197,4 +188,18 @@ func (s *State) moveCursorIntoBounds() {
 		s.cursorX = w - 1
 	}
 	s.showCursor()
+}
+
+func (s *State) bufferPosToViewPos(bufX, bufY int, wrap bool) (int, int) {
+	w, _ := s.Screen.Size()
+	x := bufX % w
+
+	offs := 0
+	for i := 0; i < bufY-s.scrollY; i++ {
+		offs += 1 + len(s.buffer[s.scrollY+i])/w
+	}
+
+	y := bufX/w + offs
+
+	return x, y
 }
