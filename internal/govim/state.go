@@ -107,7 +107,6 @@ func (s *State) showCursor() {
 func (s *State) run() {
 	for {
 		// Update screen
-		//s.Screen.Show()
 		s.showBuffer()
 
 		// Poll event
