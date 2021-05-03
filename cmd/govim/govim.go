@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	govim.NewState().Start()
+	govim.NewProgram().Start()
 }
