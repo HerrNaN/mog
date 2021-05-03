@@ -8,7 +8,12 @@ import (
 )
 
 type Program struct {
-	buf    *Buffer
+	buf *Buffer
+
+	// The line number from the buffer that should be written to the
+	// first line on screen
+	offset int
+
 	screen tcell.Screen
 }
 
@@ -34,8 +39,37 @@ func NewProgram() *Program {
 
 	return &Program{
 		screen: s,
-		buf:    BufferFrom("Hello\nMy\nName\nIs\n  HAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAH\n\n\n\n\nasdasdasd\nasd\nasd\nasd\n"),
+		buf:    EmptyBuffer(),
 	}
+}
+
+func NewProgramAt(filename string) *Program {
+	// Initialize screen
+	s, err := tcell.NewScreen()
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	if err := s.Init(); err != nil {
+		log.Fatalf("%+v", err)
+	}
+
+	buf, err := openFileIn(filename)
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+
+	return &Program{
+		screen: s,
+		buf:    buf,
+	}
+}
+
+func openFileIn(filename string) (*Buffer, error) {
+	bs, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return BufferFrom(string(bs)), nil
 }
 
 // Start sets up the program and starts the event loop
@@ -61,54 +95,38 @@ func (p *Program) showCursorIn(buf *Buffer, s tcell.Screen) {
 
 func (p *Program) moveCursor(buf *Buffer, s tcell.Screen, d dir) {
 	w, h := s.Size()
-	switch d {
-	case dirUp:
-		if buf.cursorY > 0 {
-			buf.cursorY--
-		} else if buf.offset > 0 {
-			buf.offset--
-		}
-	case dirDown:
-		if buf.cursorY == h-1 {
-			if buf.offset+buf.cursorY < len(buf.buffer)-1 {
-				buf.offset++
-			}
-		} else if buf.cursorY < h-1 {
-			if buf.offset+buf.cursorY < len(buf.buffer)-1 {
-				buf.cursorY++
-			}
-		} else {
-			panic("cursor below screen")
-		}
-	case dirLeft:
-		if buf.cursorX > len(buf.buffer[buf.cursorY]) {
-			buf.cursorX = len(buf.buffer[buf.cursorY])
-		}
-		if buf.cursorX > 0 {
-			buf.cursorX--
-		}
-	case dirRight:
-		if buf.cursorX < len(buf.buffer[buf.cursorY]) {
-			buf.cursorX++
-		}
+	buf.MoveCursor(d)
+	if buf.cursorY-p.offset == h {
+		p.offset++
+		p.showBufferIn(buf, s)
+	}
+	if buf.cursorY-p.offset == -1 {
+		p.offset--
+		p.showBufferIn(buf, s)
 	}
 	if buf.cursorX > len(buf.buffer[buf.cursorY]) {
-		x, y := bufferPosToViewPos(buf, w, len(buf.buffer[buf.cursorY]), buf.cursorY)
+		x, y := bufferPosToViewPos(buf, p.offset, w, len(buf.buffer[buf.cursorY]), buf.cursorY)
 		s.ShowCursor(x, y)
 		return
 	}
-	x, y := bufferPosToViewPos(buf, w, buf.cursorX, buf.cursorY)
+	x, y := bufferPosToViewPos(buf, p.offset, w, buf.cursorX, buf.cursorY)
 	s.ShowCursor(x, y)
 }
 
 func (p *Program) showBufferIn(buf *Buffer, s tcell.Screen) {
-	w, _ := s.Size()
+	w, h := s.Size()
 	s.Clear()
 	for bufY := range buf.buffer {
 		for bufX, r := range buf.buffer[bufY] {
-			x, y := bufferPosToViewPos(buf, w, bufX, bufY)
+			if bufY < p.offset || bufY > p.offset+h {
+				continue
+			}
+			x, y := bufferPosToViewPos(buf, p.offset, w, bufX, bufY)
 			s.SetContent(x, y, r, nil, tcell.StyleDefault)
 		}
+	}
+	for i := len(buf.buffer) - p.offset; i < h; i++ {
+		s.SetContent(0, i, '~', nil, tcell.StyleDefault)
 	}
 	s.Show()
 }
@@ -161,12 +179,12 @@ func (p *Program) setContent(buf Buffer, s tcell.Screen, r rune) {
 	s.SetContent(buf.cursorX, buf.cursorY, r, nil, tcell.StyleDefault)
 }
 
-func bufferPosToViewPos(buf *Buffer, w int, bufX, bufY int) (int, int) {
+func bufferPosToViewPos(buf *Buffer, bufferOffset, w int, bufX, bufY int) (int, int) {
 	x := bufX % w
 
 	offs := 0
-	for i := 0; i < bufY-buf.offset; i++ {
-		offs += 1 + len(buf.buffer[buf.offset+i])/w
+	for i := 0; i < bufY-bufferOffset; i++ {
+		offs += 1 + len(buf.buffer[bufferOffset+i])/w
 	}
 
 	y := bufX/w + offs

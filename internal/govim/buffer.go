@@ -1,6 +1,7 @@
 package govim
 
 import (
+	"os"
 	"strings"
 )
 
@@ -10,13 +11,13 @@ type Buffer struct {
 	// The buffer containing the contents currently being processed
 	buffer []string
 
-	// The line number from the buffer that should be written to the
-	// first line on screen
-	offset int
+	fileName *os.File
 }
 
 func EmptyBuffer() *Buffer {
-	return &Buffer{}
+	return &Buffer{
+		buffer: []string{""},
+	}
 }
 
 func BufferFromRaw(raw []string) *Buffer {
@@ -28,4 +29,28 @@ func BufferFromRaw(raw []string) *Buffer {
 func BufferFrom(s string) *Buffer {
 	buf := strings.Split(s, "\n")
 	return BufferFromRaw(buf)
+}
+
+func (b *Buffer) MoveCursor(d dir) {
+	switch d {
+	case dirUp:
+		if b.cursorY > 0 {
+			b.cursorY--
+		}
+	case dirDown:
+		if b.cursorY < len(b.buffer)-1 {
+			b.cursorY++
+		}
+	case dirLeft:
+		if b.cursorX > len(b.buffer[b.cursorY]) {
+			b.cursorX = len(b.buffer[b.cursorY])
+		}
+		if b.cursorX > 0 {
+			b.cursorX--
+		}
+	case dirRight:
+		if b.cursorX < len(b.buffer[b.cursorY]) {
+			b.cursorX++
+		}
+	}
 }
