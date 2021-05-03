@@ -81,6 +81,9 @@ func (p *Program) moveCursor(buf *Buffer, s tcell.Screen, d dir) {
 			panic("cursor below screen")
 		}
 	case dirLeft:
+		if buf.cursorX > len(buf.buffer[buf.cursorY]) {
+			buf.cursorX = len(buf.buffer[buf.cursorY])
+		}
 		if buf.cursorX > 0 {
 			buf.cursorX--
 		}
