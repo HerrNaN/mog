@@ -26,7 +26,7 @@ const (
 	dirLeft
 )
 
-// NewState creates a new program empty state
+// NewProgram creates a new program with an empty buffer
 func NewProgram() *Program {
 	// Initialize screen
 	s, err := tcell.NewScreen()
