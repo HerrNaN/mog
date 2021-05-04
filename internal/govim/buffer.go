@@ -28,6 +28,13 @@ func BufferFrom(s string) *Buffer {
 	return BufferFromRaw(buf)
 }
 
+// MoveCursor moves the cursor in the given direction. Moving to the
+// left of the first character on a line, to the right of the last
+// character on a line, above the first line or below the the last line
+// all result in no movement. Moving up or down with a x value larger
+// than the new line will not affect the x value of the cursor. This
+// value is instead adjusted to the length of the line when moving to
+// the left.
 func (b *Buffer) MoveCursor(d dir) {
 	switch d {
 	case dirUp:
