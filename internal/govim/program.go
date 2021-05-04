@@ -44,7 +44,6 @@ func NewProgram() *Program {
 }
 
 func NewProgramAt(filename string) *Program {
-	// Initialize screen
 	s, err := tcell.NewScreen()
 	if err != nil {
 		log.Fatalf("%+v", err)
