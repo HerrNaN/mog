@@ -1,7 +1,6 @@
 package govim
 
 import (
-	"os"
 	"strings"
 )
 
@@ -10,8 +9,6 @@ type Buffer struct {
 
 	// The buffer containing the contents currently being processed
 	buffer []string
-
-	fileName *os.File
 }
 
 func EmptyBuffer() *Buffer {
