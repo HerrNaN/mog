@@ -7,14 +7,16 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
+type Frame interface {
+	MoveCursor(dir)
+	Show()
+	PollEvent() tcell.Event
+	Sync()
+	Close()
+}
+
 type Program struct {
-	buf *Buffer
-
-	// The line number from the buffer that should be written to the
-	// first line on screen
-	offset int
-
-	screen tcell.Screen
+	frame Frame
 }
 
 type dir int
@@ -28,106 +30,35 @@ const (
 
 // NewProgram creates a new program with an empty buffer
 func NewProgram() *Program {
-	// Initialize screen
-	s, err := tcell.NewScreen()
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	if err := s.Init(); err != nil {
-		log.Fatalf("%+v", err)
-	}
-
 	return &Program{
-		screen: s,
-		buf:    EmptyBuffer(),
+		frame: EmptyFrame(),
 	}
 }
 
-func NewProgramAt(filename string) *Program {
-	s, err := tcell.NewScreen()
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	if err := s.Init(); err != nil {
-		log.Fatalf("%+v", err)
-	}
-
-	buf, err := openFileIn(filename)
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-
-	return &Program{
-		screen: s,
-		buf:    buf,
-	}
-}
-
-func openFileIn(filename string) (*Buffer, error) {
+func NewProgramAt(filename string) (*Program, error) {
 	bs, err := os.ReadFile(filename)
 	if err != nil {
+		log.Fatalf("%+v", err)
 		return nil, err
 	}
-	return BufferFrom(string(bs)), nil
+	return &Program{
+		frame: NewFrame(bs),
+	}, nil
 }
 
 // Start sets up the program and starts the event loop
 func (p *Program) Start() {
-	p.screen.Clear()
-	p.showCursorIn(p.buf, p.screen)
 	p.run()
 }
 
 // Quit exits the program
 func (p *Program) Quit() {
-	p.screen.Fini()
+	p.frame.Close()
 	os.Exit(0)
 }
 
 func (p *Program) Show() {
-	p.showBufferIn(p.buf, p.screen)
-}
-
-func (p *Program) showCursorIn(buf *Buffer, s tcell.Screen) {
-	s.ShowCursor(buf.cursorX, buf.cursorY)
-}
-
-func (p *Program) moveCursor(buf *Buffer, s tcell.Screen, d dir) {
-	w, h := s.Size()
-	buf.MoveCursor(d)
-	if buf.cursorY-p.offset == h {
-		p.offset++
-		p.showBufferIn(buf, s)
-	}
-	if buf.cursorY-p.offset == -1 {
-		p.offset--
-		p.showBufferIn(buf, s)
-	}
-	if buf.cursorX > len(buf.buffer[buf.cursorY]) {
-		x, y := bufferPosToViewPos(buf, p.offset, w, len(buf.buffer[buf.cursorY]), buf.cursorY)
-		s.ShowCursor(x, y)
-		return
-	}
-	x, y := bufferPosToViewPos(buf, p.offset, w, buf.cursorX, buf.cursorY)
-	s.ShowCursor(x, y)
-}
-
-func (p *Program) showBufferIn(buf *Buffer, s tcell.Screen) {
-	w, h := s.Size()
-	s.Clear()
-	for bufY := range buf.buffer {
-		for bufX, r := range buf.buffer[bufY] {
-			if bufY < p.offset || bufY > p.offset+h {
-				continue
-			}
-			x, y := bufferPosToViewPos(buf, p.offset, w, bufX, bufY)
-			s.SetContent(x, y, r, nil, tcell.StyleDefault)
-		}
-	}
-	for i := len(buf.buffer) - p.offset; i < h; i++ {
-		s.SetContent(0, i, '~', nil, tcell.StyleDefault)
-	}
-	s.Show()
+	p.frame.Show()
 }
 
 func (p *Program) run() {
@@ -136,13 +67,13 @@ func (p *Program) run() {
 		p.Show()
 
 		// Poll event
-		ev := p.screen.PollEvent()
+		ev := p.frame.PollEvent()
 
 		// Process event
 		switch ev := ev.(type) {
 		case *tcell.EventResize:
-			p.screen.Sync()
-			p.showBufferIn(p.buf, p.screen)
+			p.frame.Sync()
+			p.frame.Show()
 		case *tcell.EventKey:
 			p.handleEventKey(*ev)
 		default:
@@ -159,34 +90,12 @@ func (p *Program) handleEventKey(ev tcell.EventKey) {
 	case tcell.KeyEscape:
 		p.Quit()
 	case tcell.KeyUp:
-		p.moveCursor(p.buf, p.screen, dirUp)
+		p.frame.MoveCursor(dirUp)
 	case tcell.KeyDown:
-		p.moveCursor(p.buf, p.screen, dirDown)
+		p.frame.MoveCursor(dirDown)
 	case tcell.KeyRight:
-		p.moveCursor(p.buf, p.screen, dirRight)
+		p.frame.MoveCursor(dirRight)
 	case tcell.KeyLeft:
-		p.moveCursor(p.buf, p.screen, dirLeft)
-		//case tcell.KeyBackspace2:
-		//	p.moveCursor(p.buf, p.screen, dirLeft)
-		//	p.setContent(ev.Rune())
-		//case tcell.KeyDelete:
-		//	p.setContent(ev.Rune())
+		p.frame.MoveCursor(dirLeft)
 	}
-}
-
-func (p *Program) setContent(buf Buffer, s tcell.Screen, r rune) {
-	s.SetContent(buf.cursorX, buf.cursorY, r, nil, tcell.StyleDefault)
-}
-
-func bufferPosToViewPos(buf *Buffer, bufferOffset, w int, bufX, bufY int) (int, int) {
-	x := bufX % w
-
-	offs := 0
-	for i := 0; i < bufY-bufferOffset; i++ {
-		offs += 1 + len(buf.buffer[bufferOffset+i])/w
-	}
-
-	y := bufX/w + offs
-
-	return x, y
 }
