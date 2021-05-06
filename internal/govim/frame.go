@@ -119,6 +119,7 @@ func (f *SimpleFrame) Show() {
 
 func (f *SimpleFrame) writeBufferToScreen() {
 	_, h := f.screen.Size()
+	lastPrintedScreenLine := -1
 	for bufY := range f.buffer {
 		for bufX, r := range f.buffer[bufY] {
 			if bufY < f.offset || bufY > f.offset+h {
@@ -126,9 +127,10 @@ func (f *SimpleFrame) writeBufferToScreen() {
 			}
 			x, y := f.bufferPosToViewPos(bufX, bufY)
 			f.screen.SetContent(x, y, r, nil, tcell.StyleDefault)
+			lastPrintedScreenLine = y
 		}
 	}
-	for i := len(f.buffer) - f.offset; i < h; i++ {
+	for i := lastPrintedScreenLine + 1; i < h; i++ {
 		f.screen.SetContent(0, i, '~', nil, tcell.StyleDefault)
 	}
 }
