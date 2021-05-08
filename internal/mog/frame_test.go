@@ -13,10 +13,7 @@ import (
 )
 
 func TestSimpleFrame_MoveCursor(t *testing.T) {
-	simulationScreen := tcell.NewSimulationScreen("UTF-8")
-	simulationScreen.SetSize(5, 5)
 	type fields struct {
-		screen tcell.Screen
 		buffer []string
 		cursor Cursor
 		offset int
@@ -34,7 +31,6 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 		{
 			name: "cannot move SimpleCursor above first line",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{""},
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
@@ -46,7 +42,6 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 		{
 			name: "can move SimpleCursor up when there is another line",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{"ab", "cd"},
 				cursor: NewSimpleCursorAt(0, 1),
 				offset: 0,
@@ -58,7 +53,6 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 		{
 			name: "cannot move SimpleCursor below last line",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{""},
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
@@ -70,7 +64,6 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 		{
 			name: "can move SimpleCursor down when there is another line",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{"ab", "cd"},
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
@@ -82,7 +75,6 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 		{
 			name: "cannot move SimpleCursor to the left of the first character on a line",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{""},
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
@@ -94,7 +86,6 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 		{
 			name: "can move SimpleCursor left when there is another character",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{"ab", "cd"},
 				cursor: NewSimpleCursorAt(1, 0),
 				offset: 0,
@@ -106,7 +97,6 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 		{
 			name: "moves SimpleCursor the second last character when when moving from position outside of line length",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{"ab", "cd"},
 				cursor: NewSimpleCursorAt(10, 0),
 				offset: 0,
@@ -118,7 +108,6 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 		{
 			name: "cannot move SimpleCursor to the right of the last character on a line",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{""},
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
@@ -130,7 +119,6 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 		{
 			name: "can move SimpleCursor right when there is another character",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{"ab", "cd"},
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
@@ -142,8 +130,10 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			simulationScreen := tcell.NewSimulationScreen("UTF-8")
+			simulationScreen.SetSize(5, 5)
 			f := &SimpleFrame{
-				screen: tt.fields.screen,
+				screen: simulationScreen,
 				buffer: tt.fields.buffer,
 				cursor: tt.fields.cursor,
 				offset: tt.fields.offset,
@@ -160,12 +150,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 }
 
 func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
-	simulationScreen := tcell.NewSimulationScreen("UTF-8")
-	err := simulationScreen.Init()
-	assert.Nil(t, err)
-	simulationScreen.SetSize(3, 3)
 	type fields struct {
-		screen tcell.Screen
 		buffer []string
 		cursor Cursor
 		offset int
@@ -178,7 +163,6 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 		{
 			name: "displays empty line + tildes on the rest of the lines with empty buffer",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{""},
 				cursor: NewSimpleCursor(),
 				offset: 0,
@@ -188,7 +172,6 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 		{
 			name: "display wrapped line when buffer line is longer than screen width",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{"abcde"},
 				cursor: NewSimpleCursor(),
 				offset: 0,
@@ -198,7 +181,6 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 		{
 			name: "display only line 1 and 2 (0 indexed) + 1 tilde line when offset is 1",
 			fields: fields{
-				screen: simulationScreen,
 				buffer: []string{"a", "b", "c"},
 				cursor: NewSimpleCursor(),
 				offset: 1,
@@ -208,8 +190,13 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			simulationScreen := tcell.NewSimulationScreen("UTF-8")
+			err := simulationScreen.Init()
+			assert.Nil(t, err)
+			simulationScreen.SetSize(3, 3)
+
 			f := &SimpleFrame{
-				screen: tt.fields.screen,
+				screen: simulationScreen,
 				buffer: tt.fields.buffer,
 				cursor: tt.fields.cursor,
 				offset: tt.fields.offset,
