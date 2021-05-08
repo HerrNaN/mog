@@ -159,7 +159,7 @@ func (f *SimpleFrame) currentLine() string {
 func (f *SimpleFrame) InsertRune(r rune) {
 	if f.cursor.XPos() >= len(f.buffer[f.cursor.YPos()]) {
 		var toX = len(f.currentLine())-1
-		if len(f.currentLine()) == 0 {
+		if f.currentLine() == "" {
 			toX = 0
 		}
 		f.cursor.MoveTo(toX, f.cursor.YPos())
@@ -178,7 +178,7 @@ func (f *SimpleFrame) writeBufferToScreen() {
 	_, h := f.screen.Size()
 	lastPrintedScreenLine := -1
 	for bufY := range f.buffer {
-		if len(f.buffer[bufY]) == 0 {
+		if f.buffer[bufY] == "" {
 			lastPrintedScreenLine++
 			continue
 		}
@@ -203,7 +203,7 @@ func (f *SimpleFrame) showCursor() {
 
 func (f *SimpleFrame) cursorScreenPos() (int, int) {
 	if f.cursor.XPos() > len(f.currentLine()) {
-		if len(f.currentLine()) == 0 {
+		if f.currentLine() == "" {
 			return f.bufferPosToViewPos(0, f.cursor.YPos())
 		}
 		return f.bufferPosToViewPos(len(f.currentLine())-1, f.cursor.YPos())
