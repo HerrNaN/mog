@@ -84,9 +84,6 @@ func (p *Program) run() {
 
 func (p *Program) handleEventKey(ev tcell.EventKey) {
 	switch ev.Key() {
-	//case tcell.KeyRune:
-	//	p.setContent(ev.Rune())
-	//	p.moveCursor(p.buf, p.screen, dirRight)
 	case tcell.KeyEscape:
 		p.Quit()
 	case tcell.KeyUp:
