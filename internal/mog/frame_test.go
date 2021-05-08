@@ -322,9 +322,7 @@ func Test_loadFile_ReturnsErrorWhenLockFileExists(t *testing.T) {
 		}
 	}()
 	err = file.Close()
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
+	assert.Nil(t, err)
 	f := &SimpleFrame{
 		screen:       tcell.NewSimulationScreen("UTF-8"),
 		buffer:       nil,
