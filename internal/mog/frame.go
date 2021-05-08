@@ -1,6 +1,7 @@
 package mog
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -63,12 +64,16 @@ func NewFrameFromFile(filename string) *SimpleFrame {
 }
 
 func (f *SimpleFrame) loadFile(filePath string) error {
+	lockFilePath := lockFilePathOf(filePath)
+	if _, err := os.Stat(lockFilePath); err == nil {
+		return fmt.Errorf("file open in another frame")
+	}
+
 	bs, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
 	}
 
-	lockFilePath := lockFilePathOf(filePath)
 	file, err := os.Create(lockFilePath)
 	if err != nil {
 		return err

@@ -320,3 +320,32 @@ func Test_loadFile(t *testing.T) {
 	_, err = os.Stat(lockFileName)
 	assert.NotNil(t, err)
 }
+
+func Test_loadFile_ReturnsErrorWhenLockFileExists(t *testing.T) {
+	filename := "TestNewFrameFromFile.txt"
+
+	lockFileName := lockFilePathOf(filename)
+	file, err := os.Create(lockFileName)
+	assert.Nil(t, err)
+	defer func() {
+		err := os.Remove(lockFileName)
+		if err != nil {
+			log.Fatalf("%+v", err)
+		}
+	}()
+	err = file.Close()
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	f := &SimpleFrame{
+		screen:       tcell.NewSimulationScreen("UTF-8"),
+		buffer:       nil,
+		cursor:       nil,
+		offset:       0,
+		filePath:     "",
+		lockFilePath: "",
+	}
+
+	err = f.loadFile(filename)
+	assert.Error(t, err)
+}
