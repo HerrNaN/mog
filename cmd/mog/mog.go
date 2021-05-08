@@ -11,7 +11,7 @@ func main() {
 	if len(os.Args) == 1 {
 		mog.NewProgram().Start()
 	} else {
-		p, err := mog.NewProgramAt(os.Args[1])
+		p, err := mog.NewProgramFromFile(os.Args[1])
 		if err != nil {
 			log.Fatalf("%+v", err)
 		}

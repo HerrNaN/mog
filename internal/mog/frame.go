@@ -2,6 +2,7 @@ package mog
 
 import (
 	"log"
+	"os"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -21,10 +22,12 @@ type TextBuffer interface {
 }
 
 type SimpleFrame struct {
-	screen tcell.Screen
-	buffer []string
-	cursor Cursor
-	offset int
+	screen       tcell.Screen
+	buffer       []string
+	cursor       Cursor
+	offset       int
+	filePath     string
+	lockFilePath string
 }
 
 func EmptyFrame() *SimpleFrame {
@@ -36,9 +39,10 @@ func EmptyFrame() *SimpleFrame {
 		log.Fatalf("%+v", err)
 	}
 	return &SimpleFrame{
-		screen: s,
-		buffer: []string{""},
-		cursor: NewSimpleCursor(),
+		screen:   s,
+		buffer:   []string{""},
+		cursor:   NewSimpleCursor(),
+		filePath: "",
 	}
 }
 
@@ -47,6 +51,43 @@ func NewFrame(bs []byte) *SimpleFrame {
 	buf := strings.Split(string(bs), "\n")
 	f.buffer = buf
 	return f
+}
+
+func NewFrameFromFile(filename string) *SimpleFrame {
+	f := EmptyFrame()
+	err := f.loadFile(filename)
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	return f
+}
+
+func (f *SimpleFrame) loadFile(filePath string) error {
+	bs, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+
+	lockFilePath := lockFilePathOf(filePath)
+	file, err := os.Create(lockFilePath)
+	if err != nil {
+		return err
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Fatalf("%+v", err)
+		}
+	}(file)
+
+	f.loadBuffer(bs)
+	f.filePath = filePath
+	f.lockFilePath = lockFilePath
+	return nil
+}
+
+func (f *SimpleFrame) loadBuffer(bs []byte) {
+	f.buffer = strings.Split(string(bs), "\n")
 }
 
 // MoveCursor moves the Cursor in the given direction.
@@ -154,8 +195,13 @@ func (f *SimpleFrame) cursorScreenPos() (int, int) {
 	return f.bufferPosToViewPos(f.cursor.XPos(), f.cursor.YPos())
 }
 
-func (f *SimpleFrame) Close() {
+func (f *SimpleFrame) Close() error {
 	f.screen.Fini()
+	err := os.Remove(f.lockFilePath)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (f *SimpleFrame) PollEvent() tcell.Event {

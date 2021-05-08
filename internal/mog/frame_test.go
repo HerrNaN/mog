@@ -1,6 +1,9 @@
 package mog
 
 import (
+	"log"
+	"os"
+	"path"
 	"strings"
 	"testing"
 
@@ -277,4 +280,43 @@ func TestSimpleFrame_InsertRune(t *testing.T) {
 			assert.EqualValues(t, tt.expectedBuffer, f.buffer)
 		})
 	}
+}
+
+func Test_loadFile(t *testing.T) {
+	filename := "TestNewFrameFromFile.txt"
+	lockFileName := lockFilePathOf(filename)
+	file, err := os.Create(filename)
+	assert.Nil(t, err)
+	defer func() {
+		err := os.Remove(filename)
+		if err != nil {
+			log.Fatalf("%+v", err)
+		}
+	}()
+	err = file.Close()
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	f := &SimpleFrame{
+		screen:       tcell.NewSimulationScreen("UTF-8"),
+		buffer:       nil,
+		cursor:       nil,
+		offset:       0,
+		filePath:     "",
+		lockFilePath: "",
+	}
+	err = f.loadFile(filename)
+	assert.Nil(t, err)
+	assert.EqualValues(t, lockFileName, f.lockFilePath)
+	assert.EqualValues(t, filename, f.filePath)
+
+	info, err := os.Stat(lockFileName)
+	assert.Nil(t, err)
+	assert.Equal(t, false, info.IsDir())
+	assert.EqualValues(t, 0, info.Size())
+	assert.Equal(t, path.Base(lockFileName), info.Name())
+
+	f.Close()
+	_, err = os.Stat(lockFileName)
+	assert.NotNil(t, err)
 }

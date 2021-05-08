@@ -12,7 +12,7 @@ type Frame interface {
 	Show()
 	PollEvent() tcell.Event
 	Sync()
-	Close()
+	Close() error
 
 	// InsertRune inserts a rune at the current cursor position.
 	// Inserting a run 'a' into a line 'bb' at position 0 would
@@ -41,14 +41,9 @@ func NewProgram() *Program {
 	}
 }
 
-func NewProgramAt(filename string) (*Program, error) {
-	bs, err := os.ReadFile(filename)
-	if err != nil {
-		log.Fatalf("%+v", err)
-		return nil, err
-	}
+func NewProgramFromFile(filename string) (*Program, error) {
 	return &Program{
-		frame: NewFrame(bs),
+		frame: NewFrameFromFile(filename),
 	}, nil
 }
 
@@ -59,7 +54,10 @@ func (p *Program) Start() {
 
 // Quit exits the program
 func (p *Program) Quit() {
-	p.frame.Close()
+	err := p.frame.Close()
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
 	os.Exit(0)
 }
 
