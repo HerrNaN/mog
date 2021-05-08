@@ -303,7 +303,8 @@ func Test_loadFile(t *testing.T) {
 	assert.EqualValues(t, 0, info.Size())
 	assert.Equal(t, path.Base(lockFileName), info.Name())
 
-	f.Close()
+	err = f.Close()
+	assert.Nil(t, err)
 	_, err = os.Stat(lockFileName)
 	assert.NotNil(t, err)
 }
