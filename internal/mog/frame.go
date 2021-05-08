@@ -178,6 +178,10 @@ func (f *SimpleFrame) writeBufferToScreen() {
 	_, h := f.screen.Size()
 	lastPrintedScreenLine := -1
 	for bufY := range f.buffer {
+		if len(f.buffer[bufY]) == 0 {
+			lastPrintedScreenLine++
+			continue
+		}
 		for bufX, r := range f.buffer[bufY] {
 			if bufY < f.offset || bufY > f.offset+h {
 				continue
