@@ -193,7 +193,7 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 			expectedContents: []string{"abc", "de ", "~  "},
 		},
 		{
-			name: "display only row 1 and 2 (0 indexed) when offset is 1",
+			name: "display only line 1 and 2 (0 indexed) + 1 tilde line when offset is 1",
 			fields: fields{
 				screen: simulationScreen,
 				buffer: []string{"a", "b", "c"},
