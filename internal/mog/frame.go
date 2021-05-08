@@ -152,6 +152,13 @@ func (f *SimpleFrame) currentLine() string {
 }
 
 func (f *SimpleFrame) InsertRune(r rune) {
+	if f.cursor.XPos() >= len(f.buffer[f.cursor.YPos()]) {
+		var toX = len(f.currentLine())-1
+		if len(f.currentLine()) == 0 {
+			toX = 0
+		}
+		f.cursor.MoveTo(toX, f.cursor.YPos())
+	}
 	f.buffer[f.cursor.YPos()] = f.buffer[f.cursor.YPos()][:f.cursor.XPos()] + string(r) + f.buffer[f.cursor.YPos()][f.cursor.XPos():]
 }
 
