@@ -1,6 +1,7 @@
 package mog
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path"
@@ -277,13 +278,12 @@ func Test_loadFile(t *testing.T) {
 	defer func() {
 		err := os.Remove(filename)
 		if err != nil {
-			log.Fatalf("%+v", err)
+			log.Println(fmt.Errorf("couldn't remove file at end of test: %w", err))
 		}
 	}()
 	err = file.Close()
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
+	assert.Nil(t, err)
+
 	f := &SimpleFrame{
 		screen:       tcell.NewSimulationScreen("UTF-8"),
 		buffer:       nil,
@@ -318,7 +318,7 @@ func Test_loadFile_ReturnsErrorWhenLockFileExists(t *testing.T) {
 	defer func() {
 		err := os.Remove(lockFileName)
 		if err != nil {
-			log.Fatalf("%+v", err)
+			log.Println(fmt.Errorf("couldn't remove file at end of test: %w", err))
 		}
 	}()
 	err = file.Close()
