@@ -1,4 +1,4 @@
-package govim
+package mog
 
 type SimpleCursor struct {
 	x, y int

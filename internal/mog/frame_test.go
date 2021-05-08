@@ -1,4 +1,4 @@
-package govim
+package mog
 
 import (
 	"strings"
