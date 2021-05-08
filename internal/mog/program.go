@@ -13,6 +13,12 @@ type Frame interface {
 	PollEvent() tcell.Event
 	Sync()
 	Close()
+
+	// InsertRune inserts a rune at the current cursor position.
+	// Inserting a run 'a' into a line 'bb' at position 0 would
+	// yield 'abb'.
+	InsertRune(r rune)
+
 }
 
 type Program struct {
@@ -94,5 +100,12 @@ func (p *Program) handleEventKey(ev tcell.EventKey) {
 		p.frame.MoveCursor(dirRight)
 	case tcell.KeyLeft:
 		p.frame.MoveCursor(dirLeft)
+	case tcell.KeyRune:
+		p.handleEventRune(ev.Rune())
 	}
+}
+
+func (p *Program) handleEventRune(r rune) {
+	p.frame.InsertRune(r)
+	p.frame.MoveCursor(dirRight)
 }

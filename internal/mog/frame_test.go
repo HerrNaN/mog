@@ -232,3 +232,49 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 		})
 	}
 }
+
+func TestSimpleFrame_InsertRune(t *testing.T) {
+	simulationScreen := tcell.NewSimulationScreen("UTF-8")
+	err := simulationScreen.Init()
+	assert.Nil(t, err)
+	simulationScreen.SetSize(3, 3)
+	type fields struct {
+		screen tcell.Screen
+		buffer []string
+		cursor Cursor
+		offset int
+	}
+	type args struct {
+		r rune
+	}
+	tests := []struct {
+		name           string
+		fields         fields
+		args           args
+		expectedBuffer []string
+	}{
+		{
+			name: "adds rune at cursor position",
+			fields: fields{
+				screen: simulationScreen,
+				buffer: []string{"bb"},
+				cursor: NewSimpleCursorAt(0,0),
+				offset: 0,
+			},
+			args:           args{r: 'a'},
+			expectedBuffer: []string{"abb"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := &SimpleFrame{
+				screen: tt.fields.screen,
+				buffer: tt.fields.buffer,
+				cursor: tt.fields.cursor,
+				offset: tt.fields.offset,
+			}
+			f.InsertRune(tt.args.r)
+			assert.EqualValues(t, tt.expectedBuffer, f.buffer)
+		})
+	}
+}

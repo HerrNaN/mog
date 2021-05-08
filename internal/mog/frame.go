@@ -110,6 +110,10 @@ func (f *SimpleFrame) currentLine() string {
 	return f.buffer[f.cursor.YPos()]
 }
 
+func (f *SimpleFrame) InsertRune(r rune) {
+	f.buffer[f.cursor.YPos()] = f.buffer[f.cursor.YPos()][:f.cursor.XPos()] + string(r) + f.buffer[f.cursor.YPos()][f.cursor.XPos():]
+}
+
 func (f *SimpleFrame) Show() {
 	f.screen.Clear()
 	f.writeBufferToScreen()
