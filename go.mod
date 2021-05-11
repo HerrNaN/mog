@@ -1,4 +1,4 @@
-module elyria.io/govim
+module elyria.io/mog
 
 go 1.16
 

@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"elyria.io/govim/internal/mog"
+	"elyria.io/mog/internal/mog"
 )
 
 func main() {
