@@ -224,6 +224,42 @@ func (f *SimpleFrame) PollEvent() tcell.Event {
 	return f.screen.PollEvent()
 }
 
-func (f *SimpleFrame) Sync() {
-	f.screen.Sync()
+func (f *SimpleFrame) HandleEvent(e tcell.Event) bool {
+	switch ev := e.(type) {
+	case *tcell.EventResize:
+		f.screen.Sync()
+		f.Show()
+	case *tcell.EventKey:
+		return f.handleEventKey(*ev)
+	default:
+		log.Print(ev)
+	}
+	return false
+}
+
+func (f *SimpleFrame) handleEventKey(ev tcell.EventKey) bool {
+	switch ev.Key() {
+	case tcell.KeyEscape:
+		err := f.Close()
+		if err != nil {
+			log.Fatalf("%+v", err)
+		}
+		return true
+	case tcell.KeyUp:
+		f.MoveCursor(dirUp)
+	case tcell.KeyDown:
+		f.MoveCursor(dirDown)
+	case tcell.KeyRight:
+		f.MoveCursor(dirRight)
+	case tcell.KeyLeft:
+		f.MoveCursor(dirLeft)
+	case tcell.KeyRune:
+		f.handleEventRune(ev.Rune())
+	}
+	return false
+}
+
+func (f *SimpleFrame) handleEventRune(r rune) {
+	f.InsertRune(r)
+	f.MoveCursor(dirRight)
 }

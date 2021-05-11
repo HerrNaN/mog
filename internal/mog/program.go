@@ -11,14 +11,16 @@ type Frame interface {
 	MoveCursor(dir)
 	Show()
 	PollEvent() tcell.Event
-	Sync()
+
+	// HandleEvent returns true if the Frame closed as a result of this event
+	// and otherwise false.
+	HandleEvent(tcell.Event) bool
 	Close() error
 
 	// InsertRune inserts a rune at the current cursor position.
 	// Inserting a run 'a' into a line 'bb' at position 0 would
 	// yield 'abb'.
 	InsertRune(r rune)
-
 }
 
 type Program struct {
@@ -67,43 +69,11 @@ func (p *Program) Show() {
 
 func (p *Program) run() {
 	for {
-		// Update screen
 		p.Show()
-
-		// Poll event
 		ev := p.frame.PollEvent()
 
-		// Process event
-		switch ev := ev.(type) {
-		case *tcell.EventResize:
-			p.frame.Sync()
-			p.frame.Show()
-		case *tcell.EventKey:
-			p.handleEventKey(*ev)
-		default:
-			log.Print(ev)
+		if closed := p.frame.HandleEvent(ev); closed {
+			break
 		}
 	}
-}
-
-func (p *Program) handleEventKey(ev tcell.EventKey) {
-	switch ev.Key() {
-	case tcell.KeyEscape:
-		p.Quit()
-	case tcell.KeyUp:
-		p.frame.MoveCursor(dirUp)
-	case tcell.KeyDown:
-		p.frame.MoveCursor(dirDown)
-	case tcell.KeyRight:
-		p.frame.MoveCursor(dirRight)
-	case tcell.KeyLeft:
-		p.frame.MoveCursor(dirLeft)
-	case tcell.KeyRune:
-		p.handleEventRune(ev.Rune())
-	}
-}
-
-func (p *Program) handleEventRune(r rune) {
-	p.frame.InsertRune(r)
-	p.frame.MoveCursor(dirRight)
 }
