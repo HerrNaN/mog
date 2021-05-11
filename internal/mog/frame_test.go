@@ -25,7 +25,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 	tests := []struct {
 		name                  string
 		fields                fields
-		d                     dir
+		args                  args
 		expectedScreenCursorX int
 		expectedScreenCursorY int
 	}{
@@ -36,7 +36,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
 			},
-			d:                     dirUp,
+			args:                  args{dirUp},
 			expectedScreenCursorX: 0,
 			expectedScreenCursorY: 0,
 		},
@@ -47,7 +47,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 				cursor: NewSimpleCursorAt(0, 1),
 				offset: 0,
 			},
-			d:                     dirUp,
+			args:                  args{dirUp},
 			expectedScreenCursorX: 0,
 			expectedScreenCursorY: 0,
 		},
@@ -58,7 +58,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
 			},
-			d:                     dirDown,
+			args:                  args{dirDown},
 			expectedScreenCursorX: 0,
 			expectedScreenCursorY: 0,
 		},
@@ -69,7 +69,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
 			},
-			d:                     dirDown,
+			args:                  args{dirDown},
 			expectedScreenCursorX: 0,
 			expectedScreenCursorY: 1,
 		},
@@ -80,7 +80,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
 			},
-			d:                     dirLeft,
+			args:                  args{dirLeft},
 			expectedScreenCursorX: 0,
 			expectedScreenCursorY: 0,
 		},
@@ -91,7 +91,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 				cursor: NewSimpleCursorAt(1, 0),
 				offset: 0,
 			},
-			d:                     dirLeft,
+			args:                  args{dirLeft},
 			expectedScreenCursorX: 0,
 			expectedScreenCursorY: 0,
 		},
@@ -102,7 +102,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 				cursor: NewSimpleCursorAt(10, 0),
 				offset: 0,
 			},
-			d:                     dirLeft,
+			args:                  args{dirLeft},
 			expectedScreenCursorX: 0,
 			expectedScreenCursorY: 0,
 		},
@@ -113,7 +113,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
 			},
-			d:                     dirRight,
+			args:                  args{dirRight},
 			expectedScreenCursorX: 0,
 			expectedScreenCursorY: 0,
 		},
@@ -124,7 +124,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
 			},
-			d:                     dirRight,
+			args:                  args{dirRight},
 			expectedScreenCursorX: 1,
 			expectedScreenCursorY: 0,
 		},
@@ -139,7 +139,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 				cursor: tt.fields.cursor,
 				offset: tt.fields.offset,
 			}
-			f.MoveCursor(tt.d)
+			f.MoveCursor(tt.args.d)
 
 			ss := f.screen.(tcell.SimulationScreen)
 			cx, cy, vis := ss.GetCursor()
