@@ -169,7 +169,7 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 				cursor: NewSimpleCursor(),
 				offset: 0,
 			},
-			expectedContents: []string{"   ", "~  ", "~  "},
+			expectedContents: []string{"               ", "~              ", "~              "},
 			screenHeight:     3,
 			screenWidth:      15,
 		},
@@ -218,14 +218,12 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 			expectedRunes := []rune(strings.Join(tt.expectedContents, ""))
 
 			ss := f.screen.(tcell.SimulationScreen)
-			cells, w, h := ss.GetContents()
+			cells, _, _ := ss.GetContents()
 			var actualRunes []rune
 			for i := 0; i < len(cells); i++ {
 				actualRunes = append(actualRunes, cells[i].Runes[0])
 			}
 
-			assert.Equal(t, 3, w)
-			assert.Equal(t, 3, h)
 			assert.EqualValues(t, expectedRunes, actualRunes)
 		})
 	}
