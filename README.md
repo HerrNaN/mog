@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/HerrNaN/mog.svg?branch=main)](https://travis-ci.com/HerrNaN/mog)
 # MOG
 *(go + vim -> govim -> gom -> mog)*
 
