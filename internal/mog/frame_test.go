@@ -157,9 +157,10 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 		offset int
 	}
 	tests := []struct {
-		name             string
-		fields           fields
-		expectedContents []string
+		name                      string
+		fields                    fields
+		expectedContents          []string
+		screenWidth, screenHeight int
 	}{
 		{
 			name: "displays empty line + tildes on the rest of the lines with empty buffer",
@@ -169,6 +170,8 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 				offset: 0,
 			},
 			expectedContents: []string{"   ", "~  ", "~  "},
+			screenHeight:     3,
+			screenWidth:      15,
 		},
 		{
 			name: "display wrapped line when buffer line is longer than screen width",
@@ -177,6 +180,8 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 				cursor: NewSimpleCursor(),
 				offset: 0,
 			},
+			screenHeight:     3,
+			screenWidth:      3,
 			expectedContents: []string{"abc", "de ", "~  "},
 		},
 		{
@@ -186,6 +191,8 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 				cursor: NewSimpleCursor(),
 				offset: 1,
 			},
+			screenHeight:     3,
+			screenWidth:      3,
 			expectedContents: []string{"b  ", "c  ", "~  "},
 		},
 	}
@@ -194,7 +201,7 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 			simulationScreen := tcell.NewSimulationScreen("UTF-8")
 			err := simulationScreen.Init()
 			assert.Nil(t, err)
-			simulationScreen.SetSize(3, 3)
+			simulationScreen.SetSize(tt.screenWidth, tt.screenHeight)
 
 			f := &SimpleFrame{
 				screen: simulationScreen,
@@ -249,7 +256,7 @@ func TestSimpleFrame_InsertRune(t *testing.T) {
 			fields: fields{
 				screen: simulationScreen,
 				buffer: []string{"bb"},
-				cursor: NewSimpleCursorAt(0,0),
+				cursor: NewSimpleCursorAt(0, 0),
 				offset: 0,
 			},
 			args:           args{r: 'a'},
