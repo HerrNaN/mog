@@ -12,6 +12,40 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
+func TestSimpleFrame_MoveCursor_MovingDownFromLastLineScrollsTheView(t *testing.T) {
+	ss := tcell.NewSimulationScreen("UTF-8")
+	ss.SetSize(3, 3)
+
+	f := &SimpleFrame{
+		screen: ss,
+		buffer: []string{"a", "b", "c", "d"},
+		cursor: NewSimpleCursorAt(0, 1),
+		mode:   ModeInsert,
+		offset: 0,
+	}
+	f.MoveCursor(dirDown)
+
+	assert.EqualValues(t, 1, f.offset)
+}
+
+func TestSimpleFrame_MoveCursor_MovingUpFromFirstListScrollsTheView(t *testing.T) {
+	ss := tcell.NewSimulationScreen("UTF-8")
+	ss.SetSize(3, 3)
+
+	f := &SimpleFrame{
+		screen: ss,
+		buffer: []string{"a", "b", "c", "d"},
+		cursor: NewSimpleCursor(),
+		mode:   ModeInsert,
+		offset: 1,
+	}
+	f.MoveCursor(dirUp)
+
+	assert.EqualValues(t, 0, f.offset)
+
+}
+
+//nolint:funlen
 func TestSimpleFrame_MoveCursor(t *testing.T) {
 	type fields struct {
 		buffer []string
@@ -149,6 +183,7 @@ func TestSimpleFrame_MoveCursor(t *testing.T) {
 	}
 }
 
+//nolint:funlen
 func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 	type fields struct {
 		buffer []string
@@ -353,4 +388,81 @@ func Test_loadFile_ReturnsErrorWhenLockFileExists(t *testing.T) {
 
 	err = f.loadFile(filename)
 	assert.Error(t, err)
+}
+
+//nolint:funlen
+func TestSimpleFrame_cursorScreenPos(t *testing.T) {
+	type fields struct {
+		buffer []string
+		cursor Cursor
+		offset int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		wantX  int
+		wantY  int
+	}{
+		{
+			name: "Top left corner in non scrolled, empty frame",
+			fields: fields{
+				buffer: []string{""},
+				cursor: NewSimpleCursor(),
+				offset: 0,
+			},
+			wantX: 0,
+			wantY: 0,
+		},
+		{
+			name: "To the right of last character on line",
+			fields: fields{
+				buffer: []string{"ab"},
+				cursor: NewSimpleCursorAt(2, 0),
+				offset: 0,
+			},
+			wantX: 1,
+			wantY: 0,
+		},
+		{
+			name: "On a buffer line that wraps",
+			fields: fields{
+				buffer: []string{"abcde"},
+				cursor: NewSimpleCursorAt(4, 0),
+				offset: 0,
+			},
+			wantX: 1,
+			wantY: 1,
+		},
+		{
+			name: "On a buffer line that wraps after another line that wraps",
+			fields: fields{
+				buffer: []string{"abcde", "abcde"},
+				cursor: NewSimpleCursorAt(4, 1),
+				offset: 0,
+			},
+			wantX: 1,
+			wantY: 3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			simulationScreen := tcell.NewSimulationScreen("UTF-8")
+			simulationScreen.SetSize(3, 5)
+
+			f := &SimpleFrame{
+				screen: simulationScreen,
+				buffer: tt.fields.buffer,
+				cursor: tt.fields.cursor,
+				mode:   ModeInsert,
+				offset: tt.fields.offset,
+			}
+			got, got1 := f.cursorScreenPos()
+			if got != tt.wantX {
+				t.Errorf("cursorScreenPos() got = %v, wantX %v", got, tt.wantX)
+			}
+			if got1 != tt.wantY {
+				t.Errorf("cursorScreenPos() got1 = %v, wantX %v", got1, tt.wantY)
+			}
+		})
+	}
 }

@@ -207,7 +207,7 @@ func (f *SimpleFrame) showCursor() {
 }
 
 func (f *SimpleFrame) cursorScreenPos() (int, int) {
-	if f.cursor.XPos() > len(f.currentLine()) {
+	if f.cursor.XPos() >= len(f.currentLine()) {
 		if f.currentLine() == "" {
 			return f.bufferPosToViewPos(0, f.cursor.YPos())
 		}
