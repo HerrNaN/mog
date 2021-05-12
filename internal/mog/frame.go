@@ -272,7 +272,6 @@ func (f *SimpleFrame) handleEventRune(r rune) {
 func (f *SimpleFrame) writeBufferBottomLine() {
 	_, h := f.screen.Size()
 	bottomLine := " -- " + f.mode.Name + " --"
-	//f.clearBufferLine(h - 1)
 	f.writeBufferLine(bottomLine, h-1)
 }
 
@@ -282,6 +281,7 @@ func (f *SimpleFrame) writeBufferLine(s string, line int) {
 	}
 }
 
+//nolint:unused
 func (f *SimpleFrame) clearBufferLine(line int) {
 	w, _ := f.screen.Size()
 	for i := 0; i < w; i++ {
