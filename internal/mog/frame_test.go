@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -163,26 +162,26 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 		screenWidth, screenHeight int
 	}{
 		{
-			name: "displays empty line + tildes on the rest of the lines with empty buffer",
+			name: "displays empty line + tildes + default mode with empty buffer",
 			fields: fields{
 				buffer: []string{""},
 				cursor: NewSimpleCursor(),
 				offset: 0,
 			},
-			expectedContents: []string{"               ", "~              ", "~              "},
 			screenHeight:     3,
 			screenWidth:      15,
+			expectedContents: []string{"               ", "~              ", " -- Insert --  "},
 		},
 		{
 			name: "display wrapped line when buffer line is longer than screen width",
 			fields: fields{
-				buffer: []string{"abcde"},
+				buffer: []string{"abcdefghijabcdefghij"},
 				cursor: NewSimpleCursor(),
 				offset: 0,
 			},
 			screenHeight:     3,
-			screenWidth:      3,
-			expectedContents: []string{"abc", "de ", "~  "},
+			screenWidth:      15,
+			expectedContents: []string{"abcdefghijabcde", "fghij          ", " -- Insert --  "},
 		},
 		{
 			name: "display only line 1 and 2 (0 indexed) + 1 tilde line when offset is 1",
@@ -193,7 +192,7 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 			},
 			screenHeight:     3,
 			screenWidth:      3,
-			expectedContents: []string{"b  ", "c  ", "~  "},
+			expectedContents: []string{"b  ", "c  ", "-I-"},
 		},
 	}
 	for _, tt := range tests {
@@ -208,6 +207,7 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 				buffer: tt.fields.buffer,
 				cursor: tt.fields.cursor,
 				offset: tt.fields.offset,
+				mode:   ModeInsert,
 			}
 			f.writeBufferToScreen()
 
@@ -215,16 +215,19 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 			// also have to show it.
 			f.screen.Show()
 
-			expectedRunes := []rune(strings.Join(tt.expectedContents, ""))
-
+			// Read actual screen contents
 			ss := f.screen.(tcell.SimulationScreen)
-			cells, _, _ := ss.GetContents()
-			var actualRunes []rune
-			for i := 0; i < len(cells); i++ {
-				actualRunes = append(actualRunes, cells[i].Runes[0])
+			cells, w, h := ss.GetContents()
+			var actualBuffer []string
+			for i := 0; i < h; i++ {
+				var line []rune
+				for j := 0; j < w; j++ {
+					line = append(line, cells[i*w+j].Runes[0])
+				}
+				actualBuffer = append(actualBuffer, string(line))
 			}
 
-			assert.EqualValues(t, expectedRunes, actualRunes)
+			assert.EqualValues(t, tt.expectedContents, actualBuffer)
 		})
 	}
 }

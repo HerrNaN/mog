@@ -26,6 +26,7 @@ type SimpleFrame struct {
 	screen       tcell.Screen
 	buffer       []string
 	cursor       Cursor
+	mode         Mode
 	offset       int
 	filePath     string
 	lockFilePath string
@@ -44,6 +45,7 @@ func EmptyFrame() *SimpleFrame {
 		buffer:   []string{""},
 		cursor:   NewSimpleCursor(),
 		filePath: "",
+		mode:     ModeInsert,
 	}
 }
 
@@ -191,9 +193,10 @@ func (f *SimpleFrame) writeBufferToScreen() {
 			lastPrintedScreenLine = y
 		}
 	}
-	for i := lastPrintedScreenLine + 1; i < h; i++ {
+	for i := lastPrintedScreenLine + 1; i < h-1; i++ {
 		f.screen.SetContent(0, i, '~', nil, tcell.StyleDefault)
 	}
+	f.writeBufferBottomLine()
 }
 
 func (f *SimpleFrame) showCursor() {
@@ -262,4 +265,29 @@ func (f *SimpleFrame) handleEventKey(ev tcell.EventKey) bool {
 func (f *SimpleFrame) handleEventRune(r rune) {
 	f.InsertRune(r)
 	f.MoveCursor(dirRight)
+}
+
+func (f *SimpleFrame) writeBufferBottomLine() {
+	w, h := f.screen.Size()
+	var bottomLine string
+	if w <= 3 {
+		bottomLine = "-" + string(f.mode.Letter) + "-"
+	} else {
+		bottomLine = " -- " + f.mode.Name + " --"
+	}
+	//f.clearBufferLine(h - 1)
+	f.writeBufferLine(bottomLine, h-1)
+}
+
+func (f *SimpleFrame) writeBufferLine(s string, line int) {
+	for i, r := range s {
+		f.screen.SetContent(i, line, r, nil, tcell.StyleDefault)
+	}
+}
+
+func (f *SimpleFrame) clearBufferLine(line int) {
+	w, _ := f.screen.Size()
+	for i := 0; i < w; i++ {
+		f.screen.SetContent(i, line, ' ', nil, tcell.StyleDefault)
+	}
 }
