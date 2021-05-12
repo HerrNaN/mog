@@ -131,7 +131,8 @@ func (f *SimpleFrame) MoveCursor(d dir) {
 		}
 	}
 	_, h := f.screen.Size()
-	if f.cursor.YPos()-f.offset == h {
+	_, y := f.bufferPosToViewPos(f.cursor.XPos(), f.cursor.YPos())
+	if y == h-1 {
 		f.offset++
 	}
 	if f.cursor.YPos()-f.offset == -1 {
@@ -180,14 +181,15 @@ func (f *SimpleFrame) writeBufferToScreen() {
 	_, h := f.screen.Size()
 	lastPrintedScreenLine := -1
 	for bufY := range f.buffer {
+		// Leave an extra line free at the bottom
+		if bufY < f.offset || bufY >= f.offset+h-1 {
+			continue
+		}
 		if f.buffer[bufY] == "" {
 			lastPrintedScreenLine++
 			continue
 		}
 		for bufX, r := range f.buffer[bufY] {
-			if bufY < f.offset || bufY > f.offset+h {
-				continue
-			}
 			x, y := f.bufferPosToViewPos(bufX, bufY)
 			f.screen.SetContent(x, y, r, nil, tcell.StyleDefault)
 			lastPrintedScreenLine = y
@@ -268,13 +270,8 @@ func (f *SimpleFrame) handleEventRune(r rune) {
 }
 
 func (f *SimpleFrame) writeBufferBottomLine() {
-	w, h := f.screen.Size()
-	var bottomLine string
-	if w <= 3 {
-		bottomLine = "-" + string(f.mode.Letter) + "-"
-	} else {
-		bottomLine = " -- " + f.mode.Name + " --"
-	}
+	_, h := f.screen.Size()
+	bottomLine := " -- " + f.mode.Name + " --"
 	//f.clearBufferLine(h - 1)
 	f.writeBufferLine(bottomLine, h-1)
 }

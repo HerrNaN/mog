@@ -191,8 +191,19 @@ func TestSimpleFrame_writeBufferToScreen(t *testing.T) {
 				offset: 1,
 			},
 			screenHeight:     3,
-			screenWidth:      3,
-			expectedContents: []string{"b  ", "c  ", "-I-"},
+			screenWidth:      15,
+			expectedContents: []string{"b              ", "c              ", " -- Insert --  "},
+		},
+		{
+			name: "display only mode on last line",
+			fields: fields{
+				buffer: []string{"", "", "abcdefghihjkmno"},
+				cursor: NewSimpleCursor(),
+				offset: 0,
+			},
+			screenHeight:     3,
+			screenWidth:      15,
+			expectedContents: []string{"               ", "               ", " -- Insert --  "},
 		},
 	}
 	for _, tt := range tests {
